@@ -17,7 +17,8 @@ const getLoginPage = (req, res) => {
     res.render("auth/login", {
         docTitle: "Login",
         pageTitle: "Login to Your Account",
-        page: "login"
+        page: "login",
+        error: req.query.error || null
     })
 }
 
@@ -25,10 +26,10 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) return res.redirect("/login?error=User not found");
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(401).json({ message: "Invalid password" });
+        if (!isMatch) return res.redirect("/login?error=Invalid password");
 
         // Create JWT token
         const token = jwt.sign(
@@ -40,7 +41,7 @@ const loginUser = async (req, res) => {
         res.cookie("token", token, { httpOnly: true, maxAge: 8*60*60*1000 });
         res.redirect("/");
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.redirect("/login?error=Login failed");
     }
 };
 
@@ -55,7 +56,8 @@ const getAdminLoginPage = (req, res) => {
         layout: "./layouts/adminApp",
         docTitle: "Admin Login",
         pageTitle: "Admin Login to Your Account",
-        page: "adminLogin"
+        page: "adminLogin",
+        error: req.query.error || null
     })
 }
 
@@ -63,10 +65,10 @@ const postAdminLoginPage = async (req, res) => {
     try {
         const { email, password } = req.body;
         const admin = await Admin.findOne({ email });
-        if (!admin) return res.status(404).json({ message: "Admin not found" });
+        if (!admin) return res.redirect("/admin/login?error=Admin not found");
 
         const isMatch = await bcrypt.compare(password, admin.password);
-        if (!isMatch) return res.status(401).json({ message: "Invalid password" });
+        if (!isMatch) return res.redirect("/admin/login?error=Invalid password");
 
         // Create JWT token
         const token = jwt.sign(
@@ -78,7 +80,7 @@ const postAdminLoginPage = async (req, res) => {
         res.cookie("token", token, { httpOnly: true, maxAge: 8*60*60*1000 });
         res.redirect("/admin/dashboard");
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.redirect("/admin/login?error=Login failed");
     }
 };
 
